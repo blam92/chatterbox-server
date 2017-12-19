@@ -26,43 +26,47 @@ let messages = {results: [
     username: 'user',
     text: 'test message 1',
     roomname: 'floor 6',
-    objectId: 0
+    objectId: 0,
+    createdAt: new Date()
   },
   {
     username: 'fishsticks',
     text: 'test message 2',
     roomname: 'floor 8',
-    objectId: 1
+    objectId: 1,
+    createdAt: new Date()
   }
 ]};
 
 var requestHandler = function(request, response) {
   var headers = defaultCorsHeaders;
   console.log(request.method, request.url);
-  if (request.method === 'GET' && request.url === '/classes/messages') {
+  var currentUrl = url.parse(request.url, false).pathname;
+  if (request.method === 'GET' && currentUrl === '/classes/messages') {
     var statusCode = 200;
     headers['Content-Type'] = 'application/json';
-    response.writeHead(statusCode, headers);
-    // response.write(JSON.stringify(messages)); 
-    console.log('we are sending data!!');   
+    response.writeHead(statusCode, headers);  
     response.end(JSON.stringify(messages));
-  } else if (request.method === 'POST' && request.url === '/classes/messages') {
+
+  } else if (request.method === 'POST' && currentUrl === '/classes/messages') {
     var statusCode = 201;
     headers['Content-Type'] = 'application/json';
     response.writeHead(statusCode, headers);
     request.on('data', (message) => {
-      var q = url.parse(request.url + '/?' + message.toString(), true);
-      console.log(q);
+      console.log(message.toString());
+      let q = url.parse(request.url + '/?' + message.toString(), true);
+      let messageObj = q.query;
       console.log(q.query);
-      q.query.objectId = idCounter;
+      messageObj.objectId = idCounter;
       idCounter++;
-      messages.results.push(q.query);
+      messageObj.createdAt = new Date();
+      messages.results.push(messageObj);
     });
 
     request.on('end', () => {
       response.end(JSON.stringify(messages));
     }); 
-  } else if (request.method === 'OPTIONS' && request.url === '/classes/messages') {
+  } else if (request.method === 'OPTIONS' && currentUrl === '/classes/messages') {
     response.writeHead(200, headers);
     response.end();
   
